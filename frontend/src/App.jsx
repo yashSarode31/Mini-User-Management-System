@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 
+import NavBar from './components/NavBar'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -9,6 +10,8 @@ import AdminUsers from './pages/AdminUsers'
 
 function App() {
   return (
+  <>
+    <NavBar />
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
@@ -38,6 +41,7 @@ function App() {
       />
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
+  </>
   )
 }
 
