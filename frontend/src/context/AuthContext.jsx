@@ -1,62 +1,77 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { apiRequest } from '../api/client'
 
 const AuthContext = createContext(null)
 
-const STORAGE_KEY = 'purple.auth.user'
+const TOKEN_KEY = 'purple.auth.token'
 
 export function AuthProvider({ children }) {
-	const [user, setUser] = useState(null)
-	const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState(null)
+  const [token, setToken] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-	useEffect(() => {
-		try {
-			const raw = localStorage.getItem(STORAGE_KEY)
-			setUser(raw ? JSON.parse(raw) : null)
-		} catch {
-			setUser(null)
-		} finally {
-			setIsLoading(false)
-		}
-	}, [])
+  // Load user on app start (page refresh)
+  useEffect(() => {
+    const savedToken = localStorage.getItem(TOKEN_KEY)
 
-	const login = async ({ email, role } = {}) => {
-		const fakeUser = {
-			id: 'fake-user-1',
-			email: email || 'demo@example.com',
-			name: 'Demo User',
-			role: role || 'user',
-		}
+    if (savedToken) {
+      setToken(savedToken)
+      loadUser(savedToken)
+    } else {
+      setIsLoading(false)
+    }
+  }, [])
 
-		setUser(fakeUser)
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(fakeUser))
-		return fakeUser
-	}
+  const loadUser = async (authToken) => {
+    try {
+      const data = await apiRequest('/auth/me', {
+        token: authToken,
+      })
+      setUser(data)
+    } catch (error) {
+      logout()
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-	const logout = () => {
-		setUser(null)
-		localStorage.removeItem(STORAGE_KEY)
-	}
+  const login = async ({ email, password }) => {
+    const data = await apiRequest('/auth/login', {
+      method: 'POST',
+      body: { email, password },
+    })
 
-	const value = useMemo(
-		() => ({
-			user,
-			isAuthenticated: Boolean(user),
-			isLoading,
-			login,
-			logout,
-		}),
-		[user, isLoading],
-	)
+    localStorage.setItem(TOKEN_KEY, data.token)
+    setToken(data.token)
+    await loadUser(data.token)
+  }
 
-	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  const logout = () => {
+    localStorage.removeItem(TOKEN_KEY)
+    setUser(null)
+    setToken(null)
+  }
+
+  const value = useMemo(
+    () => ({
+      user,
+      isAuthenticated: Boolean(user),
+      isLoading,
+      login,
+      logout,
+    }),
+    [user, isLoading]
+  )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
-	const ctx = useContext(AuthContext)
-	if (!ctx) {
-		throw new Error('useAuth must be used within an AuthProvider')
-	}
-	return ctx
+  const ctx = useContext(AuthContext)
+  if (!ctx) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return ctx
 }
 
 export default AuthContext

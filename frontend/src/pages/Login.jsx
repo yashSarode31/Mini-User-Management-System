@@ -8,17 +8,22 @@ export default function Login() {
   const { login, isLoading } = useAuth()
 
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState('user')
+  const [password, setPassword] = useState('')
 
   const onSubmit = async (e) => {
     e.preventDefault()
-    await login({ email, role })
-    navigate('/dashboard', { replace: true })
+    try {
+      await login({ email, password })
+      navigate('/dashboard', { replace: true })
+    } catch (error) {
+      alert(error.message)
+    }
   }
 
   return (
     <div>
       <h1>Login</h1>
+
       <form onSubmit={onSubmit}>
         <div>
           <label>
@@ -27,7 +32,7 @@ export default function Login() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="demo@example.com"
+              placeholder="test@example.com"
               autoComplete="email"
               required
             />
@@ -36,11 +41,14 @@ export default function Login() {
 
         <div>
           <label>
-            Role
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="user">user</option>
-              <option value="admin">admin</option>
-            </select>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
           </label>
         </div>
 
