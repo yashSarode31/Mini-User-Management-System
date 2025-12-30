@@ -1,31 +1,46 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { apiRequest } from '../api/client'
 
 export default function Signup() {
   const navigate = useNavigate()
 
-  const [name, setName] = useState('')
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault()
-    // Fake signup: redirect user to login
-    navigate('/login', { replace: true })
+    setLoading(true)
+
+    try {
+      await apiRequest('/auth/signup', {
+        method: 'POST',
+        body: { fullName, email, password },
+      })
+
+      // After successful signup → go to login
+      navigate('/login', { replace: true })
+    } catch (error) {
+      alert(error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div>
       <h1>Signup</h1>
+
       <form onSubmit={onSubmit}>
         <div>
           <label>
-            Name
+            Full Name
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               required
             />
           </label>
@@ -57,7 +72,9 @@ export default function Signup() {
           </label>
         </div>
 
-        <button type="submit">Create account</button>
+        <button type="submit" disabled={loading}>
+          Create account
+        </button>
       </form>
     </div>
   )
