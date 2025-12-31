@@ -14,11 +14,28 @@ router.get(
   adminMiddleware,
   async (req, res) => {
     try {
-      const users = await User.find().select('-password')
-      res.status(200).json(users)
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1)
+      const limit = Math.max(parseInt(req.query.limit, 10) || 10, 1)
+      const skip = (page - 1) * limit
+
+      const totalUsers = await User.countDocuments()
+      const totalPages = Math.max(Math.ceil(totalUsers / limit), 1)
+
+      const users = await User.find()
+        .select('-password')
+        .skip(skip)
+        .limit(limit)
+
+      return res.status(200).json({
+        page,
+        limit,
+        totalUsers,
+        totalPages,
+        users,
+      })
     } catch (error) {
       console.error('GET USERS ERROR:', error)
-      res.status(500).json({ message: 'Server error' })
+      return res.status(500).json({ message: 'Server error' })
     }
   }
 )

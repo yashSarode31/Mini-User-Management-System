@@ -1,21 +1,30 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { getUsers, updateUserStatus } from '../api/admin'
+import { updateUserStatus } from '../api/admin'
+import { apiRequest } from '../api/client'
 
 export default function AdminUsers() {
   const { user } = useAuth()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [limit] = useState(10)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
-    loadUsers()
-  }, [])
+    loadUsers(page)
+  }, [page])
 
-  const loadUsers = async () => {
+  const loadUsers = async (pageToLoad) => {
+    setLoading(true)
     try {
       const token = localStorage.getItem('purple.auth.token')
-      const data = await getUsers(token)
-      setUsers(data)
+      const data = await apiRequest(
+        `/admin/users?page=${pageToLoad}&limit=${limit}`,
+        { token }
+      )
+      setUsers(data.users || [])
+      setTotalPages(data.totalPages || 1)
     } catch (error) {
       alert(error.message)
     } finally {
@@ -28,7 +37,7 @@ export default function AdminUsers() {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
 
     await updateUserStatus(id, newStatus, token)
-    loadUsers()
+    loadUsers(page)
   }
 
   if (loading) return <p>Loading users...</p>
@@ -36,6 +45,24 @@ export default function AdminUsers() {
   return (
     <div>
       <h1>Admin Users</h1>
+
+      <div>
+        <button
+          onClick={() => setPage((p) => Math.max(p - 1, 1))}
+          disabled={page <= 1}
+        >
+          Previous
+        </button>
+        <span>
+          Page {page} of {totalPages}
+        </span>
+        <button
+          onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+          disabled={page >= totalPages}
+        >
+          Next
+        </button>
+      </div>
 
       <table border="1" cellPadding="8">
         <thead>
@@ -57,9 +84,7 @@ export default function AdminUsers() {
               <td>{u.status}</td>
               <td>
                 {u.role !== 'admin' && (
-                  <button
-                    onClick={() => toggleStatus(u._id, u.status)}
-                  >
+                  <button onClick={() => toggleStatus(u._id, u.status)}>
                     {u.status === 'active'
                       ? 'Deactivate'
                       : 'Activate'}

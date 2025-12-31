@@ -8,10 +8,19 @@ export default function Signup() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const onSubmit = async (e) => {
     e.preventDefault()
+    setError('')
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -71,6 +80,21 @@ export default function Signup() {
             />
           </label>
         </div>
+
+        <div>
+          <label>
+            Confirm Password
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+              required
+            />
+          </label>
+        </div>
+
+        {error ? <p>{error}</p> : null}
 
         <button type="submit" disabled={loading}>
           Create account

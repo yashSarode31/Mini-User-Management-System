@@ -14,6 +14,14 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' })
     }
 
+    const isStrongPassword =
+      typeof password === 'string' && password.length >= 8 && /\d/.test(password)
+    if (!isStrongPassword) {
+      return res.status(400).json({
+        message: 'Password must be at least 8 characters and contain a number',
+      })
+    }
+
     const existingUser = await User.findOne({ email })
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' })
