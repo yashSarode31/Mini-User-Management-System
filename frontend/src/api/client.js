@@ -18,7 +18,15 @@ export async function apiRequest(
     body: body ? JSON.stringify(body) : undefined,
   })
 
-  const data = await response.json()
+  const contentType = response.headers.get('content-type') || ''
+  const isJson = contentType.includes('application/json')
+  const data = isJson ? await response.json() : await response.text()
+
+  if (!isJson) {
+    throw new Error(
+      `API returned non-JSON response. Check VITE_API_URL. Status: ${response.status}`
+    )
+  }
 
   if (!response.ok) {
     throw new Error(data.message || 'Request failed')
