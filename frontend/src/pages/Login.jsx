@@ -55,6 +55,10 @@ export default function Login() {
         <button type="submit" disabled={isLoading}>
           Sign in
         </button>
+
+        <button type="button" onClick={() => navigate('/signup')}>
+          Go to Signup
+        </button>
       </form>
     </div>
   )
